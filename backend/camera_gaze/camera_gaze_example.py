@@ -15,9 +15,22 @@ import adhawkapi.frontend
 from adhawkapi import MarkerSequenceMode, PacketType, Events
 import numpy as np
 from PIL import Image
+import cv2
 
 MARKER_SIZE = 20  # Diameter in pixels of the gaze marker
 MARKER_COLOR = (0, 250, 50)  # Colour of the gaze marker
+
+def panorama(frame_names: list[str], out_name: str):
+    imgs = map(cv2.imread, frame_names)
+
+    stitchy = cv2.Stitcher.create()
+    (succ, output) = stitchy.stitch(imgs)
+
+    if succ != cv2.STITCHER_OK:
+        print("panoramification failed")
+    else:
+        print("panoramificaion successfull")
+    cv2.imwrite(out_name, output)
 
 def QPixmapToArray(pixmap):
     ## Get the size of the current pixmap
