@@ -5,6 +5,8 @@ a camera frame, and draw a gaze marker.
 
 import math
 import sys
+import time
+from datetime import datetime
 
 # This example requires the PySide2 library for displaying windows and video. Other such libraries are avaliable, and
 # you are free to use whatever you'd like for your projects.
@@ -17,10 +19,30 @@ import numpy as np
 from PIL import Image
 import cv2
 
+# Firebase stuff
+import pyrebase
+
 MARKER_SIZE = 20  # Diameter in pixels of the gaze marker
 MARKER_COLOR = (0, 250, 50)  # Colour of the gaze marker
 
-def panorama(imgs: list[np.ndarray], out_name: str):
+# Initialize Firebase stuff
+config = {
+    "apiKey": "AIzaSyDvsdg2HuU3Z1s8hlGNftj7BkpHWdYl3W4",
+    "authDomain": "hack-the-north-2022-91c90.firebaseapp.com",
+    "projectId": "hack-the-north-2022-91c90",
+    "storageBucket": "hack-the-north-2022-91c90.appspot.com",
+    "messagingSenderId": "655955762078",
+    "appId": "1:655955762078:web:87a5548f99382a0435d48f",
+    "measurementId": "G-09WR0HTZ66",
+    "serviceAccount": "serviceAccount.json",
+    "databaseURL": "https://hack-the-north-2022-91c90-default-rtdb.firebaseio.com"
+}
+
+firebase = pyrebase.initialize_app(config)
+storage = firebase.storage()
+db = firebase.database()
+
+def panorama(imgs: list[np.ndarray]):
     print(min([i.mean() for i in imgs]))
     stitchy = cv2.Stitcher.create()
     (succ, output) = stitchy.stitch(imgs)
@@ -29,8 +51,15 @@ def panorama(imgs: list[np.ndarray], out_name: str):
         print("panoramification failed")
     else:
         print("panoramificaion successfull")
-    cv2.imwrite(out_name, cv2.cvtColor(output, cv2.COLOR_BGR2RGB )
-)
+    
+    id = round(time.time())
+    cv2.imwrite(f"{id}.png", cv2.cvtColor(output, cv2.COLOR_BGR2RGB ))
+    
+    # Push qt_img to firebase
+    storage.child(f"{id}.png").put(f"{id}.png")
+
+    # OCR
+    detect_text(f"{id}.png", id)
 
 def QPixmapToArray(pixmap):
     ## Get the size of the current pixmap
@@ -46,6 +75,35 @@ def QPixmapToArray(pixmap):
     img = np.frombuffer(byte_str, dtype=np.uint8).reshape((w,h,4))
 
     return img
+
+def detect_text(path, id):
+    """Detects text in the file."""
+    from google.cloud import vision
+    import io
+    client = vision.ImageAnnotatorClient()
+
+    with io.open(path, 'rb') as image_file:
+        content = image_file.read()
+
+    image = vision.Image(content=content)
+
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+
+    if response.error.message:
+        raise Exception(
+            '{}\nFor more info on error messages, check: '
+            'https://cloud.google.com/apis/design/errors'.format(
+                response.error.message))
+    
+    data = {
+        "id": id,
+        "transcript": texts[0].description,
+        "name": texts[1].description,
+        "created": datetime.today().strftime('%Y-%m-%d')
+    }
+    db.child("images").push(data)
+
 class Frontend:
     ''' Frontend communicating with the backend '''
 
@@ -182,7 +240,6 @@ class GazeViewer(QtWidgets.QWidget):
         # Initialize the gaze coordinates to dummy values for now
         self._gaze_coordinates = (0, 0)
         self.last_frame = None
-        self.cur_shot = 0
 
         self.extra_coords = []
 
@@ -193,7 +250,6 @@ class GazeViewer(QtWidgets.QWidget):
 
         self.in_pan = False
         self.pan_frames = []
-
 
     def closeEvent(self, event):
         '''
@@ -238,8 +294,14 @@ class GazeViewer(QtWidgets.QWidget):
             cropped = self.last_frame[min(y1, y2):max(y1,y2),min(x1,x2):max(x1,x2)]
 
             # same it
-            Image.fromarray(cropped).save(f"take-{self.cur_shot}.png")
-            self.cur_shot += 1
+            id = round(time.time())
+            Image.fromarray(cropped).save(f"{id}.png")
+
+            # Push qt_img to firebase
+            storage.child(f"{id}.png").put(f"{id}.png")
+
+            # OCR
+            detect_text(f"{id}.png", id)
 
             # remove all points
             self.reset_extra()
@@ -280,8 +342,7 @@ class GazeViewer(QtWidgets.QWidget):
             cv2_imgs.append(cv2_img)
 
         # create a panorama from them
-        panorama(cv2_imgs, f"take-{self.cur_shot}.png")
-        self.cur_shot += 1
+        panorama(cv2_imgs)
 
     def pan_clicked(self):
         if not self.in_pan:
@@ -315,8 +376,14 @@ class GazeViewer(QtWidgets.QWidget):
         # deal with blinks
         if self._blink:
             print("saving blink")
-            qt_img.save(f"take-{self.cur_shot}.png")
-            self.cur_shot += 1
+            
+            # Push qt_img to firebase
+            id = round(time.time())
+            qt_img.save(f"{id}.png")
+            storage.child(f"{id}.png").put(f"{id}.png")
+
+            # OCR
+            detect_text(f"{id}.png", id)
 
             # flash!!
             self.brightness_change = 255

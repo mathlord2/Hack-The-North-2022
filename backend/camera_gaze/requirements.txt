@@ -1,2 +1,5 @@
 adhawk
 PySide2
+opencv
+pillow
+google-cloud-vision
