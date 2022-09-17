@@ -15,6 +15,7 @@ import adhawkapi.frontend
 from adhawkapi import MarkerSequenceMode, PacketType, Events
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 from PIL import Image
 
 MARKER_SIZE = 20  # Diameter in pixels of the gaze marker
@@ -52,6 +53,7 @@ def on_long_blink(x, y, img):
         img = Image.fromarray(img.astype('uint8'))
         img.save(f'cblink-{img_index}.png')
         img_index += 1
+        las_pos = None
 
 class Frontend:
     ''' Frontend communicating with the backend '''
@@ -182,6 +184,7 @@ class GazeViewer(QtWidgets.QWidget):
 
         # Initialize the gaze coordinates to dummy values for now
         self._gaze_coordinates = (0, 0)
+        self.gazes = []
 
         # If person blinked or not
         self._blink = False
@@ -235,6 +238,7 @@ class GazeViewer(QtWidgets.QWidget):
 
         # Sets the new image
         self.image_label.setPixmap(qt_img)
+        self.gazes.append([_gaze_timestamp, self._gaze_coordinates[0], self._gaze_coordinates[1]])
 
     def _handle_gaze_in_image_stream(self, _timestamp, gaze_img_x, gaze_img_y, *_args):
 
@@ -246,7 +250,10 @@ class GazeViewer(QtWidgets.QWidget):
     def _handle_event_stream(self, event_type, _timestamp, *_args):
         if event_type == Events.BLINK.value and _args[0] > 0.5:
             self._blink = True
-            self.last_pos = [self._gaze_coordinates[0], self._gaze_coordinates[1]]
+            for i in range(len(self.gazes) - 1, -1, -1):
+                if self.gazes[i][0] <= self.gazes[-1][0] - _args[0] - 0.5:
+                    self.last_pos = self.gazes[i][1:]
+                    break
 
     def _draw_gaze_marker(self, qt_img):
         if math.isnan(self._gaze_coordinates[0]) or math.isnan(self._gaze_coordinates[1]):
