@@ -1,3 +1,0 @@
-adhawk
-opencv-contrib-python-headless
-PySide2
