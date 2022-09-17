@@ -252,8 +252,11 @@ class GazeViewer(QtWidgets.QWidget):
 
         # deal with blinks
         if self._blink:
+            print("saving blink")
             qt_img.save(f"take-{self.cur_shot}.png")
             self.cur_shot += 1
+            self.brightness_change = 255
+            self.change_alpha = 255
             self._blink = False
 
         # dealing with brightness changes (e.g. when we take a picture it should be white then fade out)
