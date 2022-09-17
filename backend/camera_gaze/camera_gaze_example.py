@@ -5,6 +5,7 @@ a camera frame, and draw a gaze marker.
 
 import math
 import sys
+import time
 
 # This example requires the PySide2 library for displaying windows and video. Other such libraries are avaliable, and
 # you are free to use whatever you'd like for your projects.
@@ -16,6 +17,9 @@ from adhawkapi import MarkerSequenceMode, PacketType, Events
 import numpy as np
 from PIL import Image
 import cv2
+
+# Firebase stuff
+import pyrebase
 
 MARKER_SIZE = 20  # Diameter in pixels of the gaze marker
 MARKER_COLOR = (0, 250, 50)  # Colour of the gaze marker
@@ -46,6 +50,7 @@ def QPixmapToArray(pixmap):
     img = np.frombuffer(byte_str, dtype=np.uint8).reshape((w,h,4))
 
     return img
+
 class Frontend:
     ''' Frontend communicating with the backend '''
 
@@ -188,6 +193,22 @@ class GazeViewer(QtWidgets.QWidget):
 
         self._blink = False
 
+        # Initialize Firebase stuff
+        config = {
+            "apiKey": "AIzaSyDvsdg2HuU3Z1s8hlGNftj7BkpHWdYl3W4",
+            "authDomain": "hack-the-north-2022-91c90.firebaseapp.com",
+            "projectId": "hack-the-north-2022-91c90",
+            "storageBucket": "hack-the-north-2022-91c90.appspot.com",
+            "messagingSenderId": "655955762078",
+            "appId": "1:655955762078:web:87a5548f99382a0435d48f",
+            "measurementId": "G-09WR0HTZ66",
+            "serviceAccount": "serviceAccount.json",
+            "databaseURL": "https://hack-the-north-2022-91c90-default-rtdb.firebaseio.com"
+        }
+
+        firebase = pyrebase.initialize_app(config)
+        self._storage = firebase.storage()
+
     def closeEvent(self, event):
         '''
         Override of the window's close event. When the window closes, we want to ensure that we shut down the api
@@ -266,7 +287,12 @@ class GazeViewer(QtWidgets.QWidget):
         # deal with blinks
         if self._blink:
             print("saving blink")
-            qt_img.save(f"take-{self.cur_shot}.png")
+            id = round(time.time())
+
+            # Push qt_img to firebase
+            qt_img.save(f"{id}.png")
+            self._storage.child(f"{id}.png").put(f"{id}.png")
+
             self.cur_shot += 1
             self.brightness_change = 255
             self.change_alpha = 255
