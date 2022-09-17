@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "hack-the-north-2022-91c90",
+  "private_key_id": "563f240be9b682f76179871d6b734ef944d0eb7e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDooZZXjcAWIl0u\nUoEzQyIb/8mm9EAkSC1ercqCeWh6MLCP3XCWrTQgFu/deR/ecF0Pzk0jGkCZvVDZ\nIJ3htBnToteCZsIY/5lCNAGCuZKWhVSn25hwJ4LDgyGx3YGXblFflEly7eR6pmqZ\n7QXqCoP7s9SA0o3njnJ+21TGxO8aZOnDwYwFE5zLEHW86xA02m/asv/NM3gOYbDi\nI92GEiJsG3fzJizsvUsRWsGPrPh7jWzjO/eGj2ICnZUiYVbcDeRXnCQMnHctBPHJ\nqODW+k0k2HAZHRr3eJEc7cFZ5rJ1b3QHuyHH6b0REaza2jiNM3iNfb2jbzYV4P24\nHteT+hUbAgMBAAECggEAFPXiRvdFtHjaLn9OluDYpO8yKzHcyagbNmmwUns/96qF\nbiEEsP7gMHgAmtL8FR3ItNDg0GXgJjoRm869iwWgQhptEpnRqVD2bSmkbTPtSlSv\nIQS/QnO864LYOV98+rj86gDBcXKP4KE3/7CElObnp3k3j3fpQ1DpbhazF8nMxXLg\nROHEcrmG15O+7BuxONJX3eyx2ERyhYfJY6S+6mSOVdlqlTGwGNVPjeCh7MBkuVCt\neAOyeu90gvwo4i95dSVKsEhZVN2rLpEGbqD65PGzdWPqyjFO/0CToyC8c4Zq9858\n2/0fLtu7yj3G8tP/AGCeVcHwq+6xAtof5Nc2JMh3cQKBgQD5AHCocxzMmfWW/2SN\nTh6CZTF8ZewMM/P3vOJIyqn1HPRgRa5wUZKspOZkQK7Hd9/2ebGwp26TAQxUGiRD\nfKIFDfCXeksRLI6CRv9RGjmk0K7R5Cfu7rE1Py9L30/P0UKdmM/iFws2gGHfrKfb\nbyECabs9GYf6C/h2uBbw4ALVswKBgQDvK1yfkjmut/6J8rFqpQeXm7gPvTEwuHhC\n8kRf7AdWhTmKzAUZOqUTFCLehwjhCmFB1pv8n6l7RbB5VTfYbdNR43EgOQ3PFFpM\nq2V5dQVPtgmdmFyw4x+WUadpzjkicoQfM9RZ1WtlJBsisJrwVBAtHeUqfQL7osPy\nxwRYzv3e+QKBgQC3XuqYMsWnq03gGE5tfXUcY/dQfCKcTfpBnBkssAr/loYlC8vN\nrVUNzRZaCARuosoNUktYI8Vbfu8cVHAWPwd2H3DprMbxa9W6/RvzFxQSWxgTPClo\nXOGlq9Vh05+MFLgxJSMahgvc5Civtw+amrk9dK3N7ipkK0Kb8y/5zY5o3wKBgQCJ\nldNJxK/EL/qQ1vlzFQ7CC4WeIEMc+PHN6VqmJ7ys7CUHEIjaU59E02+fveTAuNzs\nKA5CDINN8/AqTHi826kWUZXxaIDmIJo1wt+0ODpe+aSccVrZMz8nlT+OoWDCzUfu\nPz2olBqc62Fk2l23ZVSM78a2Y4YExkSc9BovEJyA2QKBgQCcU+Izph0fio70mWQm\nlGv+dE25PQLlt2fPNvT1f99UhL85f1+JJYdST5eRdiKp5rhwRui4GdirmaVb01Lq\n6OpKEMw9l0uQobwoSC8dGaKQwb1NyYXn8vFmSk4fEQ0Q1J8WcMksDQGqLd6ffgR3\nEN8+j99oU53A0DPIZNqZegVJ7Q==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-kkz99@hack-the-north-2022-91c90.iam.gserviceaccount.com",
+  "client_id": "113756012161647165627",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-kkz99%40hack-the-north-2022-91c90.iam.gserviceaccount.com"
+}
