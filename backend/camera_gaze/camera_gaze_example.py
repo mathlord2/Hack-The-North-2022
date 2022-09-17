@@ -12,14 +12,13 @@ from PySide2 import QtCore, QtGui, QtWidgets
 
 import adhawkapi
 import adhawkapi.frontend
-from adhawkapi import MarkerSequenceMode, PacketType, Events
+from adhawkapi import MarkerSequenceMode, PacketType
 import numpy as np
-import matplotlib.pyplot as plt
-import time
 from PIL import Image
 
 MARKER_SIZE = 20  # Diameter in pixels of the gaze marker
 MARKER_COLOR = (0, 250, 50)  # Colour of the gaze marker
+
 def QPixmapToArray(pixmap):
     ## Get the size of the current pixmap
     size = pixmap.size()
@@ -34,39 +33,15 @@ def QPixmapToArray(pixmap):
     img = np.frombuffer(byte_str, dtype=np.uint8).reshape((w,h,4))
 
     return img
-las_pos = None
-img_index = 0
-def on_long_blink(x, y, img):
-    global las_pos, img_index
-    print(x, y)
-    if las_pos is None:
-        las_pos = (x, y)
-    else:
-        x1, y1 = las_pos
-        x2, y2 = x, y
-        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
-        img = QPixmapToArray(img)
-        # Image.fromarray(img.astype('uint8')).save('0blink.png') no more debugging
-        print(img.shape, type(img))
-        img = img[min(y1, y2):max(y1, y2),min(x1, x2):max(x1, x2)]
-        print(img.shape, type(img))
-        img = Image.fromarray(img.astype('uint8'))
-        img.save(f'cblink-{img_index}.png')
-        img_index += 1
-        las_pos = None
-
 class Frontend:
     ''' Frontend communicating with the backend '''
 
-    def __init__(self, handle_gaze_in_image_stream, handle_event_stream, video_receiver_address):
+    def __init__(self, handle_gaze_in_image_stream, video_receiver_address):
         # Instantiate an API object
         self._api = adhawkapi.frontend.FrontendApi()
 
         # Tell the api that we wish to tap into the GAZE_IN_IMAGE data stream with the given callback as the handler
         self._api.register_stream_handler(PacketType.GAZE_IN_IMAGE, handle_gaze_in_image_stream)
-
-        # To detect blinking
-        self._api.register_stream_handler(PacketType.EVENTS, handle_event_stream)
 
         # Start the api and set its connection callback to self._handle_connect. When the api detects a connection to a
         # tracker, this function will be run.
@@ -116,9 +91,6 @@ class Frontend:
 
             # Sets the GAZE_IN_IMAGE data stream rate to 125Hz
             self._api.set_stream_control(PacketType.GAZE_IN_IMAGE, 125, callback=(lambda *args: None))
-
-            # Tells the api which event streams we want to tap into. In this case, we wish to tap into the BLINK data stream.
-            self._api.set_event_control(adhawkapi.EventControlBit.BLINK, 1, callback=(lambda *_args: None))
 
             # Starts the tracker's camera so that video can be captured and sets self._handle_camera_start_response as
             # the callback. This function will be called once the api has finished starting the camera.
@@ -173,6 +145,9 @@ class GazeViewer(QtWidgets.QWidget):
         self.calibration_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence('c'), self)
         self.calibration_shortcut.activated.connect(self.calibrate)
 
+        self.take_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence('t'), self)
+        self.take_shortcut.activated.connect(self.take_vertex)
+
         # Instantiate and start a video receiver with self._handle_video_stream as the handler for new frames
         self._video_receiver = adhawkapi.frontend.VideoReceiver()
         self._video_receiver.frame_received_event.add_callback(self._handle_video_stream)
@@ -180,16 +155,17 @@ class GazeViewer(QtWidgets.QWidget):
 
         # Instantiate a Frontend object. We give it the address of the video receiver, so the api's video stream will
         # be sent to it.
-        self.frontend = Frontend(self._handle_gaze_in_image_stream, self._handle_event_stream, self._video_receiver.address)
+        self.frontend = Frontend(self._handle_gaze_in_image_stream, self._video_receiver.address)
 
         # Initialize the gaze coordinates to dummy values for now
         self._gaze_coordinates = (0, 0)
-        self.gazes = []
+        self.last_frame = None
+        self.cur_shot = 0
 
-        # If person blinked or not
-        self._blink = False
-        self.last_pos = None
-        self._imageNo = 0
+        self.extra_coords = []
+
+        self.change_alpha = 0
+        self.brightness_change = 0
 
     def closeEvent(self, event):
         '''
@@ -213,18 +189,51 @@ class GazeViewer(QtWidgets.QWidget):
         ''' Function to allow the main loop to invoke a Calibration '''
         self.frontend.calibrate()
 
+    def take_vertex(self):
+        print("hello")
+        self.add_extra_coord(self._gaze_coordinates[0], self._gaze_coordinates[1])
+
+    def reset_extra(self):
+        self.extra_coords = []
+
+    def add_extra_coord(self, x, y):
+        if math.isnan(x) or math.isnan(y):
+            return
+        self.extra_coords.append([x, y])
+        if len(self.extra_coords) == 2:
+            x1, y1, x2, y2 = self.extra_coords[0][0], self.extra_coords[0][1], self.extra_coords[1][0], self.extra_coords[1][1]
+            x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+            cropped = self.last_frame[min(y1, y2):max(y1,y2),min(x1,x2):max(x1,x2)]
+            Image.fromarray(cropped).save(f"take-{self.cur_shot}.png")
+            self.cur_shot += 1
+            self.reset_extra()
+
+            self.brightness_change = 255
+            self.change_alpha = 255
+        elif len(self.extra_coords) == 1:
+            self.change_alpha = 100
+
+    def draw_extra_coords(self, qt_img):
+        # Draws the gaze marker on the given frame image
+        painter = QtGui.QPainter(qt_img)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(250, 0, 0), QtCore.Qt.SolidPattern))
+        for x, y in self.extra_coords:
+            painter.drawEllipse(QtCore.QRectF(x - MARKER_SIZE / 2, y - MARKER_SIZE / 2, MARKER_SIZE, MARKER_SIZE))
+        painter.end()
+
+    def draw_rect(self, r, g, b, a, qt_img: QtGui.QPixmap):
+        painter = QtGui.QPainter(qt_img)
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(r, g, b, a), QtCore.Qt.SolidPattern))
+        painter.drawRect(QtCore.QRect(0, 0, qt_img.width().real, qt_img.height().real))
+        painter.end()
+
     def _handle_video_stream(self, _gaze_timestamp, _frame_index, image_buf, _frame_timestamp):
 
         # Create a new Qt pixmap and load the frame's data into it
         qt_img = QtGui.QPixmap()
         qt_img.loadFromData(image_buf, 'JPEG')
-
-        # Save image to local directory
-        if self._blink:
-            self._blink = False
-            qt_img.save('blink' + str(self._imageNo) + '.jpg')
-            on_long_blink(self.last_pos[0], self.last_pos[1], qt_img)
-            self._imageNo += 1
+        self.last_frame = QPixmapToArray(qt_img)
 
         # Get the image's size. If self._frame_size has not yet been initialized, we set its values to the frame size.
         size = qt_img.size().toTuple()
@@ -233,27 +242,26 @@ class GazeViewer(QtWidgets.QWidget):
             # Set the image label's size to the frame's size
             self.image_label.resize(size[0], size[1])
 
+        self.draw_rect(self.brightness_change, self.brightness_change, self.brightness_change, self.change_alpha, qt_img)
+        if self.brightness_change == 255:
+            self.change_alpha -= 10
+            if self.change_alpha <= 0:
+                self.change_alpha = 0
+                self.brightness_change = 0
+
         # Draws the gaze marker on the new frame
         self._draw_gaze_marker(qt_img)
 
+        self.draw_extra_coords(qt_img)
+
         # Sets the new image
         self.image_label.setPixmap(qt_img)
-        self.gazes.append([_gaze_timestamp, self._gaze_coordinates[0], self._gaze_coordinates[1]])
 
     def _handle_gaze_in_image_stream(self, _timestamp, gaze_img_x, gaze_img_y, *_args):
 
         # Updates the gaze marker coordinates with new gaze data. It is possible to receive NaN from the api, so we
         # filter the input accordingly.
         self._gaze_coordinates = [gaze_img_x, gaze_img_y]
-
-    # To detect blinking
-    def _handle_event_stream(self, event_type, _timestamp, *_args):
-        if event_type == Events.BLINK.value and _args[0] > 0.5:
-            self._blink = True
-            for i in range(len(self.gazes) - 1, -1, -1):
-                if self.gazes[i][0] <= self.gazes[-1][0] - _args[0] - 0.5:
-                    self.last_pos = self.gazes[i][1:]
-                    break
 
     def _draw_gaze_marker(self, qt_img):
         if math.isnan(self._gaze_coordinates[0]) or math.isnan(self._gaze_coordinates[1]):
