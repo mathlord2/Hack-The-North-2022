@@ -12,7 +12,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 
 import adhawkapi
 import adhawkapi.frontend
-from adhawkapi import MarkerSequenceMode, PacketType
+from adhawkapi import MarkerSequenceMode, PacketType, Events
 import numpy as np
 from PIL import Image
 
@@ -36,12 +36,15 @@ def QPixmapToArray(pixmap):
 class Frontend:
     ''' Frontend communicating with the backend '''
 
-    def __init__(self, handle_gaze_in_image_stream, video_receiver_address):
+    def __init__(self, handle_gaze_in_image_stream, handle_event_stream, video_receiver_address):
         # Instantiate an API object
         self._api = adhawkapi.frontend.FrontendApi()
 
         # Tell the api that we wish to tap into the GAZE_IN_IMAGE data stream with the given callback as the handler
         self._api.register_stream_handler(PacketType.GAZE_IN_IMAGE, handle_gaze_in_image_stream)
+
+        # To detect blinking
+        self._api.register_stream_handler(PacketType.EVENTS, handle_event_stream)
 
         # Start the api and set its connection callback to self._handle_connect. When the api detects a connection to a
         # tracker, this function will be run.
@@ -91,6 +94,9 @@ class Frontend:
 
             # Sets the GAZE_IN_IMAGE data stream rate to 125Hz
             self._api.set_stream_control(PacketType.GAZE_IN_IMAGE, 125, callback=(lambda *args: None))
+
+            # Tells the api which event streams we want to tap into. In this case, we wish to tap into the BLINK data stream.
+            self._api.set_event_control(adhawkapi.EventControlBit.BLINK, 1, callback=(lambda *_args: None))
 
             # Starts the tracker's camera so that video can be captured and sets self._handle_camera_start_response as
             # the callback. This function will be called once the api has finished starting the camera.
@@ -155,7 +161,7 @@ class GazeViewer(QtWidgets.QWidget):
 
         # Instantiate a Frontend object. We give it the address of the video receiver, so the api's video stream will
         # be sent to it.
-        self.frontend = Frontend(self._handle_gaze_in_image_stream, self._video_receiver.address)
+        self.frontend = Frontend(self._handle_gaze_in_image_stream, self._handle_event_stream, self._video_receiver.address)
 
         # Initialize the gaze coordinates to dummy values for now
         self._gaze_coordinates = (0, 0)
@@ -166,6 +172,8 @@ class GazeViewer(QtWidgets.QWidget):
 
         self.change_alpha = 0
         self.brightness_change = 0
+
+        self._blink = False
 
     def closeEvent(self, event):
         '''
@@ -242,6 +250,13 @@ class GazeViewer(QtWidgets.QWidget):
             # Set the image label's size to the frame's size
             self.image_label.resize(size[0], size[1])
 
+        # deal with blinks
+        if self._blink:
+            qt_img.save(f"take-{self.cur_shot}.png")
+            self.cur_shot += 1
+            self._blink = False
+
+        # dealing with brightness changes (e.g. when we take a picture it should be white then fade out)
         self.draw_rect(self.brightness_change, self.brightness_change, self.brightness_change, self.change_alpha, qt_img)
         if self.brightness_change == 255:
             self.change_alpha -= 10
@@ -262,6 +277,11 @@ class GazeViewer(QtWidgets.QWidget):
         # Updates the gaze marker coordinates with new gaze data. It is possible to receive NaN from the api, so we
         # filter the input accordingly.
         self._gaze_coordinates = [gaze_img_x, gaze_img_y]
+
+    # To detect blinking
+    def _handle_event_stream(self, event_type, _timestamp, *_args):
+        if event_type == Events.BLINK.value and _args[0] > 0.5:
+            self._blink = True
 
     def _draw_gaze_marker(self, qt_img):
         if math.isnan(self._gaze_coordinates[0]) or math.isnan(self._gaze_coordinates[1]):
