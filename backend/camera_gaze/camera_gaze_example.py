@@ -13,11 +13,45 @@ from PySide2 import QtCore, QtGui, QtWidgets
 import adhawkapi
 import adhawkapi.frontend
 from adhawkapi import MarkerSequenceMode, PacketType, Events
-
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
 
 MARKER_SIZE = 20  # Diameter in pixels of the gaze marker
 MARKER_COLOR = (0, 250, 50)  # Colour of the gaze marker
+def QPixmapToArray(pixmap):
+    ## Get the size of the current pixmap
+    size = pixmap.size()
+    h = size.width()
+    w = size.height()
 
+    ## Get the QImage Item and convert it to a byte string
+    qimg = pixmap.toImage()
+    byte_str = qimg.bits().tobytes()
+
+    ## Using the np.frombuffer function to convert the byte string into an np array
+    img = np.frombuffer(byte_str, dtype=np.uint8).reshape((w,h,4))
+
+    return img
+las_pos = None
+img_index = 0
+def on_long_blink(x, y, img):
+    global las_pos, img_index
+    print(x, y)
+    if las_pos is None:
+        las_pos = (x, y)
+    else:
+        x1, y1 = las_pos
+        x2, y2 = x, y
+        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+        img = QPixmapToArray(img)
+        # Image.fromarray(img.astype('uint8')).save('0blink.png') no more debugging
+        print(img.shape, type(img))
+        img = img[min(y1, y2):max(y1, y2),min(x1, x2):max(x1, x2)]
+        print(img.shape, type(img))
+        img = Image.fromarray(img.astype('uint8'))
+        img.save(f'cblink-{img_index}.png')
+        img_index += 1
 
 class Frontend:
     ''' Frontend communicating with the backend '''
@@ -151,6 +185,7 @@ class GazeViewer(QtWidgets.QWidget):
 
         # If person blinked or not
         self._blink = False
+        self.last_pos = None
         self._imageNo = 0
 
     def closeEvent(self, event):
@@ -185,6 +220,7 @@ class GazeViewer(QtWidgets.QWidget):
         if self._blink:
             self._blink = False
             qt_img.save('blink' + str(self._imageNo) + '.jpg')
+            on_long_blink(self.last_pos[0], self.last_pos[1], qt_img)
             self._imageNo += 1
 
         # Get the image's size. If self._frame_size has not yet been initialized, we set its values to the frame size.
@@ -210,6 +246,7 @@ class GazeViewer(QtWidgets.QWidget):
     def _handle_event_stream(self, event_type, _timestamp, *_args):
         if event_type == Events.BLINK.value and _args[0] > 0.5:
             self._blink = True
+            self.last_pos = [self._gaze_coordinates[0], self._gaze_coordinates[1]]
 
     def _draw_gaze_marker(self, qt_img):
         if math.isnan(self._gaze_coordinates[0]) or math.isnan(self._gaze_coordinates[1]):
