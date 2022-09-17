@@ -20,9 +20,8 @@ import cv2
 MARKER_SIZE = 20  # Diameter in pixels of the gaze marker
 MARKER_COLOR = (0, 250, 50)  # Colour of the gaze marker
 
-def panorama(frame_names: list[str], out_name: str):
-    imgs = map(cv2.imread, frame_names)
-
+def panorama(imgs: list[np.ndarray], out_name: str):
+    print(min([i.mean() for i in imgs]))
     stitchy = cv2.Stitcher.create()
     (succ, output) = stitchy.stitch(imgs)
 
@@ -30,7 +29,8 @@ def panorama(frame_names: list[str], out_name: str):
         print("panoramification failed")
     else:
         print("panoramificaion successfull")
-    cv2.imwrite(out_name, output)
+    cv2.imwrite(out_name, cv2.cvtColor(output, cv2.COLOR_BGR2RGB )
+)
 
 def QPixmapToArray(pixmap):
     ## Get the size of the current pixmap
@@ -167,6 +167,9 @@ class GazeViewer(QtWidgets.QWidget):
         self.take_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence('t'), self)
         self.take_shortcut.activated.connect(self.take_vertex)
 
+        self.pan_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence('p'), self)
+        self.pan_shortcut.activated.connect(self.pan_clicked)
+
         # Instantiate and start a video receiver with self._handle_video_stream as the handler for new frames
         self._video_receiver = adhawkapi.frontend.VideoReceiver()
         self._video_receiver.frame_received_event.add_callback(self._handle_video_stream)
@@ -187,6 +190,10 @@ class GazeViewer(QtWidgets.QWidget):
         self.brightness_change = 0
 
         self._blink = False
+
+        self.in_pan = False
+        self.pan_frames = []
+
 
     def closeEvent(self, event):
         '''
@@ -211,7 +218,6 @@ class GazeViewer(QtWidgets.QWidget):
         self.frontend.calibrate()
 
     def take_vertex(self):
-        print("hello")
         self.add_extra_coord(self._gaze_coordinates[0], self._gaze_coordinates[1])
 
     def reset_extra(self):
@@ -220,18 +226,30 @@ class GazeViewer(QtWidgets.QWidget):
     def add_extra_coord(self, x, y):
         if math.isnan(x) or math.isnan(y):
             return
+
+        # add the coordinate
         self.extra_coords.append([x, y])
+
+        # at the second "extra" coordinate, the corners are defined
         if len(self.extra_coords) == 2:
             x1, y1, x2, y2 = self.extra_coords[0][0], self.extra_coords[0][1], self.extra_coords[1][0], self.extra_coords[1][1]
             x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+            # crop the array
             cropped = self.last_frame[min(y1, y2):max(y1,y2),min(x1,x2):max(x1,x2)]
+
+            # same it
             Image.fromarray(cropped).save(f"take-{self.cur_shot}.png")
             self.cur_shot += 1
+
+            # remove all points
             self.reset_extra()
 
+            # flash !!
             self.brightness_change = 255
             self.change_alpha = 255
         elif len(self.extra_coords) == 1:
+            # darken the screen
+            self.brightness_change = 0
             self.change_alpha = 100
 
     def draw_extra_coords(self, qt_img):
@@ -239,15 +257,46 @@ class GazeViewer(QtWidgets.QWidget):
         painter = QtGui.QPainter(qt_img)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.setBrush(QtGui.QBrush(QtGui.QColor(250, 0, 0), QtCore.Qt.SolidPattern))
+
+        # draw each point
         for x, y in self.extra_coords:
             painter.drawEllipse(QtCore.QRectF(x - MARKER_SIZE / 2, y - MARKER_SIZE / 2, MARKER_SIZE, MARKER_SIZE))
         painter.end()
 
     def draw_rect(self, r, g, b, a, qt_img: QtGui.QPixmap):
+        # overlays a generic rectangle
         painter = QtGui.QPainter(qt_img)
         painter.setBrush(QtGui.QBrush(QtGui.QColor(r, g, b, a), QtCore.Qt.SolidPattern))
         painter.drawRect(QtCore.QRect(0, 0, qt_img.width().real, qt_img.height().real))
         painter.end()
+
+    def process_pan(self):
+        print(f"Processing Panorama: length is {len(self.pan_frames)}")
+        cv2_imgs = []
+        # convert all QPixmap images into cv2 images
+        for img in self.pan_frames[::10]:
+            np_arr = QPixmapToArray(img)
+            cv2_img = cv2.cvtColor(np_arr, cv2.COLOR_RGB2BGR)
+            cv2_imgs.append(cv2_img)
+
+        # create a panorama from them
+        panorama(cv2_imgs, f"take-{self.cur_shot}.png")
+        self.cur_shot += 1
+
+    def pan_clicked(self):
+        if not self.in_pan:
+            self.in_pan = True
+
+            # darken the screen
+            self.brightness_change = 0
+            self.change_alpha = 100
+        else:
+            self.process_pan()
+
+            # flash !!
+            self.brightness_change = 255
+            self.change_alpha = 255
+            self.in_pan = False
 
     def _handle_video_stream(self, _gaze_timestamp, _frame_index, image_buf, _frame_timestamp):
 
@@ -268,9 +317,15 @@ class GazeViewer(QtWidgets.QWidget):
             print("saving blink")
             qt_img.save(f"take-{self.cur_shot}.png")
             self.cur_shot += 1
+
+            # flash!!
             self.brightness_change = 255
             self.change_alpha = 255
             self._blink = False
+
+        # deal with panorama
+        if self.in_pan:
+            self.pan_frames.append(qt_img.copy())
 
         # dealing with brightness changes (e.g. when we take a picture it should be white then fade out)
         self.draw_rect(self.brightness_change, self.brightness_change, self.brightness_change, self.change_alpha, qt_img)
