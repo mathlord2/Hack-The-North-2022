@@ -3,3 +3,8 @@ PySide2
 opencv
 pillow
 google-cloud-vision
+google-cloud
+imutils
+pyrebase4
+scipy
+shapely

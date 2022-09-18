@@ -5,7 +5,7 @@ import numpy as np
 width, height = 800, 530
 green = (0, 255, 0)
 
-image = cv2.imread("img.png")
+image = cv2.imread("document_test.png")
 image = cv2.resize(image, (width, height))
 orig_image = image.copy()
 
@@ -37,7 +37,6 @@ for contour in contours:
 cv2.drawContours(orig_image, [doc_cnts], -1, green, 3)
 cv2.imshow("Contours of the document", orig_image)
 warped = four_point_transform(orig_image, doc_cnts.reshape(4, 2))
-warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
 cv2.imshow("Scanned", cv2.resize(warped, (600, 800)))
 cv2.waitKey(0)
 cv2.destroyAllWindows()

@@ -60,9 +60,13 @@ def panorama(imgs: list[np.ndarray]):
     
     # Push qt_img to firebase
     storage.child(f"{id}.png").put(f"{id}.png")
-
-    # OCR
-    detect_text(f"{id}.png", id)
+    data = {
+        "id": id,
+        "transcript": "Panorama photo",
+        "name": "Panorama",
+        "created": datetime.today().strftime('%Y-%m-%d')
+    }
+    db.child("images").push(data)
 
 def QPixmapToArray(pixmap):
     ## Get the size of the current pixmap
