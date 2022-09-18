@@ -47,7 +47,12 @@ function App() {
         <Container>
           <Title>InstaCap</Title>
           <PicturesContainer>
-            <Pictures pictures={pictures} />
+            <Pictures
+              pictures={pictures}
+              onDelete={(id) => {
+                setPictures(pictures.filter((p) => p.id !== id));
+              }}
+            />
           </PicturesContainer>
         </Container>
       </DarkMode>

@@ -18,8 +18,10 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import styled from "@emotion/styled";
+import { child, get, ref, remove } from "firebase/database";
 import { ReactElement } from "react";
 import { Photo } from "../App";
+import { db } from "../utils/firebase";
 
 function Picture({
   id,
@@ -27,7 +29,8 @@ function Picture({
   created,
   transcript,
   imageUrl,
-}: Photo): ReactElement {
+  onDelete,
+}: Photo & { onDelete: () => any }): ReactElement {
   const {
     isOpen: transcriptIsOpen,
     onOpen: transcriptOnOpen,
@@ -52,7 +55,19 @@ function Picture({
               <Button leftIcon={<LinkIcon />} onClick={imageOnOpen}>
                 View Image
               </Button>
-              <Button leftIcon={<DeleteIcon />}>Delete</Button>
+              <Button
+                leftIcon={<DeleteIcon />}
+                onClick={async () => {
+                  const data = (await get(ref(db, "images"))).val();
+                  const thisKey = Object.entries(data).find(
+                    ([k, d]) => (d as any).id === id
+                  )?.[0];
+                  await remove(child(ref(db, "images"), thisKey!));
+                  onDelete();
+                }}
+              >
+                Delete
+              </Button>
             </VStack>
             <Modal
               isOpen={imageIsOpen}
