@@ -61,13 +61,7 @@ def panorama(imgs: list[np.ndarray]):
     
     # Push qt_img to firebase
     storage.child(f"{id}.png").put(f"{id}.png")
-    data = {
-        "id": id,
-        "transcript": "Panorama photo",
-        "name": "Panorama",
-        "created": datetime.today().strftime('%Y-%m-%d')
-    }
-    db.child("images").push(data)
+    detect_text(f"{id}.png", id)
 
 def QPixmapToArray(pixmap):
     ## Get the size of the current pixmap
@@ -350,7 +344,7 @@ class GazeViewer(QtWidgets.QWidget):
         painter.end()
 
     def process_pan(self):
-        print(f"Processing Panorama: length is {len(self.pan_frames)}")
+        print(f"Processing Panorama: length is {int(len(self.pan_frames)/10)}")
         cv2_imgs = []
         # convert all QPixmap images into cv2 images
         for img in self.pan_frames[::10]:
@@ -360,6 +354,8 @@ class GazeViewer(QtWidgets.QWidget):
 
         # create a panorama from them
         panorama(cv2_imgs)
+
+        self.pan_frames = []
 
     def pan_clicked(self):
         if not self.in_pan:
@@ -433,12 +429,12 @@ class GazeViewer(QtWidgets.QWidget):
                     doc_cnts = approx
                     break
 
-            # cv2.drawContours(orig_image, [doc_cnts], -1, green, 3)
-            # cv2.imshow("Contours of the document", orig_image)
+            cv2.drawContours(orig_image, [doc_cnts], -1, green, 3)
+            cv2.imshow("Contours of the document", orig_image)
             warped = four_point_transform(orig_image, doc_cnts.reshape(4, 2))
-            # cv2.imshow("Scanned", cv2.resize(warped, (600, 800)))
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
+            cv2.imshow("Scanned", cv2.resize(warped, (600, 800)))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
             cv2.imwrite(f"{id}.png", warped)
             storage.child(f"{id}.png").put(f"{id}.png")
 

@@ -15,8 +15,23 @@ export interface Photo {
 }
 
 function App() {
+  const [search, setSearch] = useState("");
+
   const [pictures, setPictures] = useState<Photo[]>([]);
+  const [filteredPictures, setFilteredPictures] = useState<Photo[]>([]);
   const { colorMode, toggleColorMode } = useColorMode();
+
+  useEffect(() => {
+    const searchedPictures = [];
+
+    for (let i = 0; i < pictures.length; i++) {
+      if (pictures[i].transcript.toLowerCase().includes(search.toLowerCase())){
+        searchedPictures.push(pictures[i]);
+      }
+    }
+
+    setFilteredPictures(searchedPictures);
+  }, [search]);
 
   useEffect(() => {
     if (colorMode === "light") {
@@ -42,6 +57,7 @@ function App() {
 
           if (count === 0) {
             setPictures(newPhotos);
+            setFilteredPictures(newPhotos);
           }
         });
       }
@@ -53,12 +69,22 @@ function App() {
       <DarkMode>
         <Container>
           <Title>InstaCap</Title>
+          <div style={{ width: "100%", textAlign: "center" }}>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search ..."
+              style={{ width: "60%", padding: "10px", marginBottom: "20px" }}
+            />
+          </div>
+
           <PicturesContainer>
             <Pictures
-              pictures={pictures}
+              pictures={filteredPictures}
               onDelete={(id) => {
                 setPictures(pictures.filter((p) => p.id !== id));
-                
+                setFilteredPictures(filteredPictures.filter((p) => p.id !== id));
+
                 // Delete from Realtime DB
                 const dataRef = dbRef(db, "images");
                 onValue(dataRef, (snapshot: any) => {
@@ -82,6 +108,7 @@ function App() {
     </ChakraProvider>
   );
 }
+
 
 const Container = styled.div``;
 
