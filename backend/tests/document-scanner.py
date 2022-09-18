@@ -42,8 +42,7 @@ cv2.imshow("Scanned", cv2.resize(warped, (600, 800)))
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-def get_edges(path: str, width: int, height: int):
-    image = cv2.imread("img.png")
+def get_edges(image: np.ndarray, width: int, height: int):
     image = cv2.resize(image, (width, height))
     orig_image = image.copy()
 
