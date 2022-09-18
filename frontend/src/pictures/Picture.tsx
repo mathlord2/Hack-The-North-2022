@@ -1,9 +1,4 @@
-import {
-  CalendarIcon,
-  DeleteIcon,
-  DownloadIcon,
-  EditIcon,
-} from "@chakra-ui/icons";
+import { CalendarIcon, DeleteIcon, EditIcon, LinkIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -33,22 +28,55 @@ function Picture({
   transcript,
   imageUrl,
 }: Photo): ReactElement {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: transcriptIsOpen,
+    onOpen: transcriptOnOpen,
+    onClose: transcriptOnClose,
+  } = useDisclosure();
+  const {
+    isOpen: imageIsOpen,
+    onOpen: imageOnOpen,
+    onClose: imageOnClose,
+  } = useDisclosure();
 
   return (
     <Container textAlign="center">
       <Box position="relative">
-        <Image src={imageUrl}></Image>
+        <Image src={imageUrl} />
         <Overlay>
           <Center h="100%">
             <VStack>
-              <Button leftIcon={<CalendarIcon />} onClick={onOpen}>
+              <Button leftIcon={<CalendarIcon />} onClick={transcriptOnOpen}>
                 View Transcript
               </Button>
-              <Button leftIcon={<DownloadIcon />}>Download</Button>
+              <Button leftIcon={<LinkIcon />} onClick={imageOnOpen}>
+                View Image
+              </Button>
               <Button leftIcon={<DeleteIcon />}>Delete</Button>
             </VStack>
-            <Modal isOpen={isOpen} onClose={onClose} isCentered>
+            <Modal
+              isOpen={imageIsOpen}
+              onClose={imageOnClose}
+              isCentered
+              size="4xl"
+            >
+              <ModalOverlay />
+              <ModalContent>
+                <ModalBody>
+                  <Img src={imageUrl} borderRadius="5" />
+                </ModalBody>
+                <ModalFooter>
+                  <Button colorScheme="blue" mr={3} onClick={imageOnClose}>
+                    Close
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+            <Modal
+              isOpen={transcriptIsOpen}
+              onClose={transcriptOnClose}
+              isCentered
+            >
               <ModalOverlay />
               <ModalContent>
                 <ModalHeader>Transcript</ModalHeader>
@@ -56,7 +84,7 @@ function Picture({
                 <ModalBody>{transcript}</ModalBody>
 
                 <ModalFooter>
-                  <Button colorScheme="blue" mr={3} onClick={onClose}>
+                  <Button colorScheme="blue" mr={3} onClick={transcriptOnClose}>
                     Close
                   </Button>
                   {/* <Button variant="ghost">Copy</Button> */}

@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
 import { ChakraProvider, DarkMode, useColorMode } from "@chakra-ui/react";
 import styled from "@emotion/styled";
+import { onValue, ref as dbRef } from "firebase/database";
+import { getDownloadURL, ref as storageRef } from "firebase/storage";
+import { useEffect, useState } from "react";
 import Pictures from "./pictures/Pictures";
 import { db, storage } from "./utils/firebase";
-import { ref as storageRef, getDownloadURL } from "firebase/storage";
-import { ref as dbRef, onValue } from "firebase/database";
 
 export interface Photo {
   id: string;
@@ -47,7 +47,7 @@ function App() {
         <Container>
           <Title>InstaCap</Title>
           <PicturesContainer>
-            <Pictures pictures={pictures}/>
+            <Pictures pictures={pictures} />
           </PicturesContainer>
         </Container>
       </DarkMode>
