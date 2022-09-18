@@ -15,6 +15,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 import adhawkapi
 import adhawkapi.frontend
 from adhawkapi import MarkerSequenceMode, PacketType, Events
+from imutils.perspective import four_point_transform
 import numpy as np
 from PIL import Image
 import cv2
@@ -119,7 +120,7 @@ def get_edges(image: np.ndarray, width: int, height: int):
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
     edged = cv2.Canny(blur, 75, 200)
 
-    return orig_image, edged
+    return edged
 
 def find_rectangular_contours(edged: np.ndarray):
     contours, _ = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -417,7 +418,16 @@ class GazeViewer(QtWidgets.QWidget):
             
             # Push qt_img to firebase
             id = round(time.time())
-            qt_img.save(f"{id}.png")
+            rgb_img = QPixmapToArray(qt_img)
+            cv2_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
+            edged = get_edges(cv2_img, cv2_img.shape[1], cv2_img.shape[0])
+            contours = find_rectangular_contours(edged)
+            choice = largest_contains(contours, self._gaze_coordinates[0], self._gaze_coordinates[1])
+            if not choice:
+                qt_img.save(f"{id}.png")
+            else:
+                warped = four_point_transform(cv2_img, choice.reshape(4, 2))
+                cv2.imwrite(f"{id}.png", warped)
             storage.child(f"{id}.png").put(f"{id}.png")
 
             # OCR
