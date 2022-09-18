@@ -111,8 +111,8 @@ function Picture({
       </Box>
       <HStack mx="auto" w="max-content" mt="5">
         <Title>{name}</Title>
-        <IconButton aria-label="" icon={<EditIcon />} />
-        {/* <Menu>
+        {/* <IconButton aria-label="" icon={<EditIcon />} />
+         <Menu>
           <Options
             as={IconButton}
             aria-label="Options"

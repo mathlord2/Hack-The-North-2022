@@ -5,7 +5,7 @@ import numpy as np
 width, height = 800, 530
 green = (0, 255, 0)
 
-image = cv2.imread("document_test.png")
+image = cv2.imread("tmp.png")
 image = cv2.resize(image, (width, height))
 orig_image = image.copy()
 

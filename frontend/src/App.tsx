@@ -1,7 +1,7 @@
 import { ChakraProvider, DarkMode, useColorMode } from "@chakra-ui/react";
 import styled from "@emotion/styled";
-import { onValue, ref as dbRef } from "firebase/database";
-import { getDownloadURL, ref as storageRef } from "firebase/storage";
+import { onValue, ref as dbRef, remove } from "firebase/database";
+import { getDownloadURL, ref as storageRef, deleteObject } from "firebase/storage";
 import { useEffect, useState } from "react";
 import Pictures from "./pictures/Pictures";
 import { db, storage } from "./utils/firebase";
@@ -28,14 +28,21 @@ function App() {
     const dataRef = dbRef(db, "images");
     onValue(dataRef, (snapshot: any) => {
       const data = snapshot.val();
-
+      let newPhotos: Photo[] = [];
+      let count = Object.keys(data).length;
+      
       for (let d in data) {
         let photo = data[d];
-
         const sRef = storageRef(storage, "/" + data[d].id + ".png");
+        
         getDownloadURL(sRef).then((url: string) => {
           photo.imageUrl = url;
-          setPictures((prevPictures: Photo[]) => [...prevPictures, photo]);
+          newPhotos.push(photo);
+          count--;
+
+          if (count === 0) {
+            setPictures(newPhotos);
+          }
         });
       }
     });
@@ -51,6 +58,22 @@ function App() {
               pictures={pictures}
               onDelete={(id) => {
                 setPictures(pictures.filter((p) => p.id !== id));
+                
+                // Delete from Realtime DB
+                const dataRef = dbRef(db, "images");
+                onValue(dataRef, (snapshot: any) => {
+                  const data = snapshot.val();
+
+                  for (let d in data) {
+                    if (data[d].id === id) {
+                      remove(dbRef(db, "images/" + d));
+                    }
+                  }
+                });
+
+                // Delete from Storage
+                const sRef = storageRef(storage, "/" + id + ".png");
+                deleteObject(sRef);
               }}
             />
           </PicturesContainer>

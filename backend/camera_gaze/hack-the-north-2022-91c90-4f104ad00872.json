@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "hack-the-north-2022-91c90",
+  "private_key_id": "4f104ad008723f765d1a53d2d004773cc87da20c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDZoWqBgs89AFgZ\nVSs3+hAdZsxHksd7rtbYbD04m8PHpBMYTcurQEQPwceHE1YMdeNzeWvTwKzEZo5l\nkHd/dD8NZqIbZ094xn3uPdvA1cbbtcjPALoDfvyEf5yItYBFoNRcNEkWK9sFw5W0\nHi4+XW6A+DSxjh7YCvoEzD8cpo1PC6qelLtcEAztnB4t8g7G8Stq9Ek04I5mRjyY\ny8qqX3dQnPZWU28FLH4CCuraWK7WbkEosmh4/TbOc8PDLFebeZSZzmo05eEzFZEf\n4e69CPZk6/iJzwgi/ITTCOuxsd7s7gPjNYHX1J2EJnFwTjA8LnkVjMm2I+E83gjb\n0xHMk5Y3AgMBAAECggEABlB6JB7U/3qak8WWVu3w+MFqTOtT0WFdx3LAhfty/0Bh\n83MSZTocn25qaR9lAECNZGTR/ZdaC+rD1+uMpAyN5cgkDPJ+6kysC7UMwrgRKH/K\nP0NQolhVYEzJkGffvGVxs+kqc7O7C5xEpDC5+8I/Ogu5j6tFdtQ+s9PvQtgMQo5Q\n5H4YjswdnTK29zKLGG1iCOsvtZ81REj+YVv2I2cO92NhoPAES7GPeJK9GrXB6sYg\npxgLRF9n4T7ra8Oa6NSNqg2gTUsdCQX3MFRgQdQogdZM1syhBp6XuB3rG/zu70fy\nDrIyms0BTMbIHRi9DDgiKP6EILjtviqnggADMQ60pQKBgQD1Pw7FOzwkBgfd2J5N\nScDbpmrrNeRQxBMv5k2Jlv9FQiwXl9iAL5aVdo+C9WKQ2riSU8oeW3TAuYzUBsQM\nfTavxlv9FR6jtoEvMeI7n+8RBpEHb6gvk13GvqFY85AjZE+JGM9uRvBqy2mZYabo\nKlPsXAcP9/qvpcM0XEhI/+4UzQKBgQDjLF1/iHhOPTopUsSapu1WhqThwgI/Lsk1\nLGwlj+HuAgIRHsnt/4rYtTB1xKstmJ2YDJ4xsO4kAQD3DHEWnvkd9lgxW+b3/7Ws\nz9U2SJkk2PZZXDE8bGXzOwZoJQ0TwVCM4R3w91SZ4Md+nJLu0LxGKT3zd5tdd4w7\nmrwZxTA3EwKBgQDkNGwTHV6GCtKRHXuYYZPDECUXf4tXmExeWwg1irs4gC21Ooes\nKBwQMkWyT5ILRmtPRgainumSWFZyCWWuVWlowMRiSJ+9KRsmhl2Eq/ryNdEIQV8X\n/iHZyRMsSWALftD/uoVykTIvvd4iapq8GH8FRlEQC+lKPo3ZEDH3M6cf1QKBgQDa\nUf29HeM4lcD6i6+kTP5UpGt7Bx9vpz/5WSrJ4oAnY0inOWao0miWoXLkC1DTLhNu\nV9oEOVxzv3807YEVU0xoTiIttXvAJMBtRwNJ+vUqo1QFRwOOZUKJQdWDavApZyRJ\nb+N9e8STaaFvfXv8BSCbcPE3tV/bsJNViPxy673NfwKBgQCgHPozSSorvpt+7CEb\n6g6jltWPwk9wPNN59kHoxWX79o7JQL6NOz4xsNWInJEbBn7eDj8wXMxcNlrRYXkk\njpkrE53RTErZ2cscN+UsXd2N4elcN/ZbCvG3TOzRvOAqnxSm03dhKWAhjq4Ll+mt\nDgYIAyA/NJdJmnLjWRn0F7VcQA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "hackthenorth2022@hack-the-north-2022-91c90.iam.gserviceaccount.com",
+  "client_id": "112554192178782746334",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/hackthenorth2022%40hack-the-north-2022-91c90.iam.gserviceaccount.com"
+}

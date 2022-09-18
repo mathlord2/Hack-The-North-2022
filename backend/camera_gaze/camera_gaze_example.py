@@ -104,44 +104,22 @@ def detect_text(path, id):
             'https://cloud.google.com/apis/design/errors'.format(
                 response.error.message))
     
-    data = {
-        "id": id,
-        "transcript": texts[0].description,
-        "name": texts[1].description,
-        "created": datetime.today().strftime('%Y-%m-%d')
-    }
+    if (len(texts) > 0):
+        data = {
+            "id": id,
+            "transcript": texts[0].description,
+            "name": texts[1].description,
+            "created": datetime.today().strftime('%Y-%m-%d')
+        }
+    else:
+        data = {
+            "id": id,
+            "transcript": "No text detected",
+            "name": "Image",
+            "created": datetime.today().strftime('%Y-%m-%d')
+        }
+
     db.child("images").push(data)
-
-def get_edges(image: np.ndarray, width: int, height: int):
-    image = cv2.resize(image, (width, height))
-    orig_image = image.copy()
-
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    edged = cv2.Canny(blur, 75, 200)
-
-    return edged
-
-def find_rectangular_contours(edged: np.ndarray):
-    contours, _ = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)
-
-    rectangular_contours = []
-    for contour in contours:
-        peri = cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, 0.05 * peri, True)
-        if len(approx) == 4:
-            rectangular_contours.append(approx)
-
-    return rectangular_contours
-
-def largest_contains(contours, x, y):
-    point = Point(x, y)
-    for i in contours:
-        polygon = Polygon(i)
-        if polygon.contains(point):
-            return i
-    return contours[0] if len(contours) > 0 else None
 
 class Frontend:
     ''' Frontend communicating with the backend '''
@@ -418,16 +396,50 @@ class GazeViewer(QtWidgets.QWidget):
             
             # Push qt_img to firebase
             id = round(time.time())
-            rgb_img = QPixmapToArray(qt_img)
-            cv2_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
-            edged = get_edges(cv2_img, cv2_img.shape[1], cv2_img.shape[0])
-            contours = [np.asarray(i).reshape(-1, 2) for i in find_rectangular_contours(edged)]
-            choice = largest_contains(contours, self._gaze_coordinates[0], self._gaze_coordinates[1])
-            if not choice:
-                qt_img.save(f"{id}.png")
-            else:
-                warped = four_point_transform(cv2_img, choice.reshape(4, 2))
-                cv2.imwrite(f"{id}.png", warped)
+            qt_img.save(f"tmp.png")
+            width, height = 1280, 720
+            green = (0, 255, 0)
+
+            image = cv2.imread("tmp.png")
+            image = cv2.resize(image, (width, height))
+            orig_image = image.copy()
+
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            blur = cv2.GaussianBlur(gray, (5, 5), 0)
+            edged = cv2.Canny(blur, 75, 200)
+
+            """
+            cv2.imshow("Original Image: ", image)
+            cv2.imshow("Edged: ", edged)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            """
+
+            contours, _ = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+            """
+            cv2.imshow("Image", image)
+            cv2.drawContours(image, contours, -1, green, 3)
+            cv2.imshow("All contours", image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            """
+            
+            for contour in contours:
+                peri = cv2.arcLength(contour, True)
+                approx = cv2.approxPolyDP(contour, 0.05 * peri, True)
+                if len(approx) == 4:
+                    doc_cnts = approx
+                    break
+
+            # cv2.drawContours(orig_image, [doc_cnts], -1, green, 3)
+            # cv2.imshow("Contours of the document", orig_image)
+            warped = four_point_transform(orig_image, doc_cnts.reshape(4, 2))
+            # cv2.imshow("Scanned", cv2.resize(warped, (600, 800)))
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+            cv2.imwrite(f"{id}.png", warped)
             storage.child(f"{id}.png").put(f"{id}.png")
 
             # OCR
