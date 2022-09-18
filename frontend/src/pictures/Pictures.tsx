@@ -1,22 +1,25 @@
 import styled from "@emotion/styled";
-import { ReactElement } from "react";
-import { mockPicturesData } from "../mock/pictures";
-import Picture from "./Picture";
 import { Photo } from "../App";
+import Picture from "./Picture";
 
 interface PicturesProps {
   pictures: Photo[];
+  onDelete: (id: string) => any;
 }
 
-const Pictures = (props: PicturesProps) => {
+const Pictures = ({ pictures, onDelete }: PicturesProps) => {
   return (
     <Container>
-      {props.pictures.map((picture) => (
-        <Picture {...picture} key={picture.id}/>
+      {pictures.map((picture) => (
+        <Picture
+          {...picture}
+          key={picture.id}
+          onDelete={() => onDelete(picture.id)}
+        />
       ))}
     </Container>
   );
-}
+};
 
 const Container = styled.div`
   display: flex;

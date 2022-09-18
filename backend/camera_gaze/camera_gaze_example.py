@@ -421,7 +421,7 @@ class GazeViewer(QtWidgets.QWidget):
             rgb_img = QPixmapToArray(qt_img)
             cv2_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
             edged = get_edges(cv2_img, cv2_img.shape[1], cv2_img.shape[0])
-            contours = find_rectangular_contours(edged)
+            contours = [np.asarray(i).reshape(-1, 2) for i in find_rectangular_contours(edged)]
             choice = largest_contains(contours, self._gaze_coordinates[0], self._gaze_coordinates[1])
             if not choice:
                 qt_img.save(f"{id}.png")
