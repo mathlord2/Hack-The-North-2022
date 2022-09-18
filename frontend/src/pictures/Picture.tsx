@@ -1,10 +1,9 @@
-import { CalendarIcon, DeleteIcon, EditIcon, LinkIcon } from "@chakra-ui/icons";
+import { CalendarIcon, DeleteIcon, LinkIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
   Center,
   HStack,
-  IconButton,
   Img,
   MenuButton,
   Modal,
@@ -76,9 +75,9 @@ function Picture({
               size="4xl"
             >
               <ModalOverlay />
-              <ModalContent>
+              <ModalContent h="90vh">
                 <ModalBody>
-                  <Img src={imageUrl} borderRadius="5" />
+                  <Img src={imageUrl} borderRadius="5" h="100%" mx="auto" />
                 </ModalBody>
                 <ModalFooter>
                   <Button colorScheme="blue" mr={3} onClick={imageOnClose}>
