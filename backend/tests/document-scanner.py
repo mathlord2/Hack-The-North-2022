@@ -65,3 +65,13 @@ def find_rectangular_contours(edged: np.ndarray):
             rectangular_contours.append(approx)
 
     return rectangular_contours
+
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+def largest_contains(contours, x, y):
+    point = Point(x, y)
+    for i in contours:
+        polygon = Polygon(i)
+        if polygon.contains(point):
+            return i
+    return None
