@@ -77,7 +77,13 @@ function Picture({
               <ModalOverlay />
               <ModalContent h="90vh">
                 <ModalBody>
-                  <Img src={imageUrl} borderRadius="5" h="100%" mx="auto" />
+                  <Img
+                    src={imageUrl}
+                    borderRadius="5"
+                    h="100%"
+                    mx="auto"
+                    objectFit="contain"
+                  />
                 </ModalBody>
                 <ModalFooter>
                   <Button colorScheme="blue" mr={3} onClick={imageOnClose}>
