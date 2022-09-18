@@ -141,7 +141,7 @@ def largest_contains(contours, x, y):
         polygon = Polygon(i)
         if polygon.contains(point):
             return i
-    return None
+    return contours[0] if len(contours) > 0 else None
 
 class Frontend:
     ''' Frontend communicating with the backend '''
