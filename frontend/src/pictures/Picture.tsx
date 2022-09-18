@@ -24,15 +24,15 @@ import {
 } from "@chakra-ui/react";
 import styled from "@emotion/styled";
 import { ReactElement } from "react";
-import { IPicture } from "../mock/pictures";
+import { Photo } from "../App";
 
 function Picture({
+  id,
   name,
   created,
-
   transcript,
   imageUrl,
-}: IPicture): ReactElement {
+}: Photo): ReactElement {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
@@ -82,7 +82,7 @@ function Picture({
           </MenuList>
         </Menu> */}
       </HStack>
-      <Created>{created.toLocaleDateString()}</Created>
+      <Created>{created}</Created>
     </Container>
   );
 }

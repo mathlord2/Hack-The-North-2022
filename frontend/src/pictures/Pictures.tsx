@@ -2,14 +2,17 @@ import styled from "@emotion/styled";
 import { ReactElement } from "react";
 import { mockPicturesData } from "../mock/pictures";
 import Picture from "./Picture";
+import { Photo } from "../App";
 
-interface PicturesProps {}
+interface PicturesProps {
+  pictures: Photo[];
+}
 
-function Pictures({}: PicturesProps): ReactElement {
+const Pictures = (props: PicturesProps) => {
   return (
     <Container>
-      {mockPicturesData.map((picture) => (
-        <Picture {...picture} />
+      {props.pictures.map((picture) => (
+        <Picture {...picture} key={picture.id}/>
       ))}
     </Container>
   );
